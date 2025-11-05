@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  generate-matrix:
+    uses: ./.github/workflows/generate.yml
+    with:
+      runners: '[
+        "ubuntu-latest",
+        "windows-latest",
+        "macos-latest"
+      ]'
+      include-pre-releases: true
+      include-freethreaded: true
+      implementations: '["PyPy", "CPython"]'
+
+  test:
+    needs: [generate-matrix]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python --version

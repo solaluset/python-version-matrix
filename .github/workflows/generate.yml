@@ -1,0 +1,119 @@
+name: Generate Python Version Matrix
+
+on:
+  workflow_call:
+    inputs:
+      runners:
+        description: "Runners to generate matrix for"
+        type: string
+        required: true
+      min-version:
+        description: "Minimal suitable version (inclusive)"
+        type: string
+        required: false
+        default: "auto"
+      max-version:
+        description: "Maximal suitable version (exclusive)"
+        type: string
+        required: false
+        default: "auto"
+      include-pre-releases:
+        description: "Whether to include pre-releases"
+        type: boolean
+        required: false
+        default: false
+      include-freethreaded:
+        description: "Whether to include free threaded versions"
+        type: boolean
+        required: false
+        default: false
+      implementations:
+        description: "Python implementations to check"
+        type: string
+        required: false
+        default: '["cpython"]'
+      check-platform:
+        description: "Whether to check arch and OS compatibility"
+        type: boolean
+        required: false
+        default: true
+    outputs:
+      matrix:
+        description: "Generated matrix of runners and Python versions"
+        value: ${{ jobs.generate-matrix.outputs.matrix }}
+
+jobs:
+  fetch-python-versions:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: ${{ fromJson(inputs.runners) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: &repo solaluset/python-version-matrix
+          ref: &ref main
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: &python "3.13"
+
+      - name: Install dependencies
+        shell: bash
+        run: pip install -r requirements.txt
+
+      - name: Fetch Python Versions
+        shell: bash
+        env:
+          MIN_VERSION: ${{ inputs.min-version }}
+          MAX_VERSION: ${{ inputs.max-version }}
+          INCLUDE_PRE_RELEASES: ${{ inputs.include-pre-releases }}
+          INCLUDE_FREETHREADED: ${{ inputs.include-freethreaded }}
+          IMPLEMENTATIONS: ${{ inputs.implementations }}
+          CHECK_PLATFORM: ${{ inputs.check-platform }}
+
+          VERSIONS_FILE: ${{ matrix.runner }}.json
+        run: |
+          mkdir python-versions
+          python main.py "$MIN_VERSION" "$MAX_VERSION" \
+            "$INCLUDE_PRE_RELEASES" "$INCLUDE_FREETHREADED" \
+            "$IMPLEMENTATIONS" "$CHECK_PLATFORM" \
+            > "python-versions/$VERSIONS_FILE"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: python-versions-${{ matrix.runner }}
+          path: ./python-versions/*.json
+
+  generate-matrix:
+    needs: [fetch-python-versions]
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.final-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: *repo
+          ref: *ref
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: *python
+
+      - uses: actions/download-artifact@v6.0.0
+        with:
+          pattern: python-versions-*
+          path: python-versions
+          merge-multiple: true
+
+      - name: Generate final matrix
+        id: final-matrix
+        shell: bash
+        run: |
+          output="$(python matrix.py python-versions)"
+          if [ "$?" != "0" ]; then
+            exit 1
+          fi
+          echo "matrix=$output" >> "$GITHUB_OUTPUT"
