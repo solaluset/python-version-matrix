@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           repository: &repo solaluset/python-version-matrix
-          ref: &ref main
+          ref: &ref v1.0
 
       - name: Setup Python
         uses: actions/setup-python@v6
