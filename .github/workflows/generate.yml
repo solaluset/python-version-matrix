@@ -81,7 +81,7 @@ jobs:
             "$IMPLEMENTATIONS" "$CHECK_PLATFORM" \
             > "python-versions/$VERSIONS_FILE"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: python-versions-${{ matrix.runner }}
           path: ./python-versions/*.json
