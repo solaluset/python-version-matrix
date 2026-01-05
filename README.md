@@ -7,7 +7,7 @@ A reusable workflow for generating matrix of runners and Python versions, fetche
 ```yaml
 jobs:
   generate-matrix:
-    uses: solaluset/python-version-matrix/.github/workflows/generate.yml@v1.0
+    uses: solaluset/python-version-matrix/.github/workflows/generate.yml@v1.0.1
     with:
       # List of runners in JSON format, mandatory
       runners: '[
