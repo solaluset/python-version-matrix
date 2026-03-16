@@ -102,7 +102,7 @@ jobs:
         with:
           python-version: *python
 
-      - uses: actions/download-artifact@v8.0.0
+      - uses: actions/download-artifact@v8.0.1
         with:
           pattern: python-versions-*
           path: python-versions
