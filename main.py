@@ -127,6 +127,12 @@ class EntryProcessor:
         versions = defaultdict(list)
 
         for entry in entries:
+            if (
+                isinstance(entry, PyPyEntry)
+                and entry["data"]["pypy_version"] == "nightly"
+            ):
+                continue
+
             if entry.version < self.min_version:
                 continue
             if self.max_version and entry.version >= self.max_version:
