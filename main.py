@@ -131,7 +131,10 @@ class EntryProcessor:
                 continue
             if self.max_version and entry.version >= self.max_version:
                 continue
-            if not self.include_pre_releases and entry.version.is_prerelease:
+            if not self.include_pre_releases and (
+                entry.version.is_prerelease
+                or not entry.data.get("stable", True)
+            ):
                 continue
             files = entry.data["files"]
             if self.target_os:
