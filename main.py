@@ -129,7 +129,7 @@ class EntryProcessor:
         for entry in entries:
             if (
                 isinstance(entry, PyPyEntry)
-                and entry["data"]["pypy_version"] == "nightly"
+                and entry.data["pypy_version"] == "nightly"
             ):
                 continue
 
